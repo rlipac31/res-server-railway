@@ -1,6 +1,7 @@
 const { response, request } = require('express');
-const Usuario = require('../models/usuario');
 const bcryptjs = require('bcryptjs');
+
+const Usuario = require('../models/usuario');
 
 
 
@@ -50,7 +51,7 @@ const usuariosPost = async (req, res = response) => {
     });
 }
 
-const usuariosPut = async (req, res = response) => {
+const usuariosPut = async (req=request, res = response) => {
 
     const { id } = req.params;
     const {_id, password, email, google, ...resto } = req.body;
@@ -60,48 +61,45 @@ const usuariosPut = async (req, res = response) => {
         resto.password = bcryptjs.hashSync( password, salt );
     }
     const usuario = await Usuario.findByIdAndUpdate( id, resto );// busca el ussuario por su id  y le pasa el resto a acualizar
-    console.log(usuario);
+    const usuarioUpdate = await Usuario.findById(id)
+   // console.log(usuarioUpdate);
 
-    res.status(200).json(usuario);
+  /*  const [  usuario ,usuarioUpdate] = await Promise.all([
+            Usuario.findByIdAndUpdate( id, resto ),
+            Usuario.findById(id)
+   
+  
+    ]);
+ */
+    res.status(200).json( {
+        usuario,
+        usuarioUpdate
+    });
 
 }
 
-const usuariosPatch = (req, res = response) => {
+const usuariosPatch = (req= request, res = response) => {
     res.json({
         msg: 'patch API - usuariosPatch'
     });
 }
 
-const usuariosDelete = async (req, res = response) => {
-  const { id  } = req.params;
-
-    //borrar fisicamente de la Bd
- 
-   /* const usuarioBorrado =  await Usuario.findByIdAndDelete(id)
-  .then(doc => {
-    if (doc) {
-      console.log('Documento eliminado:', doc);
-      res.json(doc);
-    } else {
-      console.log('Documento no encontrado');
+const usuariosDelete = async (req = request, res = response) => {
+  //const usuaiosAutenticado = req.usuario;
+    //borrado logico  mediante el campo estado del Modelo
+    try {
+        const { id  } = req.params;
+        const usuario = await Usuario.findByIdAndUpdate( id, { estado: false } );
+        const  usuarioEliminado = await Usuario.findById(id);
+        //console.log(usuaiosAutenticado);
+        return res.json({
+            usuarioEliminado
+            //usuaiosAutenticado
+        });
+    }catch (error) {
+        console.log(error);         
     }
-  })
-  .catch(err => console.error('Error al eliminar el documento:', err)); */
-
-//borrado logico  mediante el campo estado del Modelo
-const usuarioBorrado =  await Usuario.findByIdAndUpdate(id, {estado:false})
-  .then(doc => {
-    if (doc) {
-      console.log('Documento eliminado:', doc);
-      res.status(200).json(doc);
-    } else {
-      console.log('Documento no encontrado');
-    }
-  })
-  .catch(err => console.error('Error al eliminar el documento:', err));
 }
-
-
 
 module.exports = {
     usuariosGet,
